@@ -1,7 +1,7 @@
-# 第 3 章　跑通 DocsGPT：先把完整 RAG 产品跑起来
+# 第 3 章　跑通如意知识库工厂：先把完整 RAG 产品跑起来
 
-> 本章你会亲手做出：一套在你自己机器上能访问的 DocsGPT，外加第一个"带出处"的答案。
-> 难度：进阶　｜　对应仓库脚本：`ruyi/scripts/ruyi-setup.ps1`、`ruyi/scripts/ruyi-start.ps1`
+> 本章你会亲手做出：一套在你自己机器上能访问的如意知识库工厂，外加第一个"带出处"的答案。
+> 难度：进阶　｜　本章基于标签 `bk-ch03`　｜　对应仓库脚本：`ruyi/scripts/ruyi-setup.ps1`、`ruyi/scripts/ruyi-start.ps1`
 
 ## 开篇：我一上来就被 Docker 卡住了
 
@@ -23,7 +23,7 @@ docker: command not found
 
 ## 本章目标
 
-- 无论有没有 Docker，都能把 DocsGPT 在本机跑起来；
+- 无论有没有 Docker，都能把如意知识库工厂在本机跑起来；
 - 认识本地原生运行的"四件套"：后端、索引 worker、Redis+Postgres、FAISS；
 - 上传第一份资料，问出第一个带引用来源的答案。
 
@@ -71,9 +71,17 @@ Get-NetTCPConnection -State Listen -LocalPort 6379,5432 | Select-Object LocalPor
 
 能看到 6379（Redis）和 5432（Postgres）就说明两个大件都在。**这是个好消息**——DocsGPT 后端真正依赖的两个重家伙，我本机原生就有，压根不用 Docker 帮我拉。要是你机器上没有，这两个装一下即可，它们都是很成熟的东西，网上教程一大把。
 
-### 第 2 步：建虚拟环境、装依赖
+### 第 2 步：拉代码、建虚拟环境、装依赖
 
-进到项目目录，建一个干净的 Python 虚拟环境，把依赖装进去：
+先把仓库拉下来。这本书配套的仓库是**公开的**，直接 clone；clone 完先检出本章对应的标签 `bk-ch03`，保证你手里的代码和书里写的一字不差（这是本书的版本线约定，每一章都有自己的标签，仓库后续怎么演进都影响不到你）：
+
+```powershell
+git clone https://github.com/DaPengRuYi/RuyiDocsGPT.git
+cd RuyiDocsGPT
+git checkout bk-ch03
+```
+
+然后建一个干净的 Python 虚拟环境，把依赖装进去：
 
 ```powershell
 python -m venv .venv
