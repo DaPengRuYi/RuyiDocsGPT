@@ -14,14 +14,15 @@ ruyi/
 ├─ scripts/
 │  ├─ ruyi-setup.ps1         一键环境搭建(venv + 依赖 + 数据库检查)
 │  ├─ ruyi-start.ps1         一键启动(后端 uvicorn + worker celery)
-│  └─ ruyi-stop.ps1          一键停止
+│  ├─ ruyi-stop.ps1          一键停止
+│  └─ ruyi-sync-corpus.ps1   评测语料同步(书稿 13 章 → eval/corpus)
 ├─ docs/
 │  └─ UPSTREAM_SYNC.md       上游同步机制与二开改动清单(基线 arc53/DocsGPT v0.17.2)
 └─ eval/
    ├─ README.md              评测集使用说明
-   ├─ testset.json           中文回归评测集(10 语料内 + 1 语料外测幻觉)
+   ├─ testset.json           中文回归评测集 v2(11 语料内 + 1 语料外测幻觉)
    ├─ run_eval.py            评测运行器(输出命中率/正确率/幻觉率)
-   └─ corpus/                评测用中文语料(3 份)
+   └─ corpus/                语料 = 《大鹏 RAG 实战：如意知识库工厂》13 章书稿("用这本书问这本书")
 ```
 
 ## 快速上手（Windows PowerShell）

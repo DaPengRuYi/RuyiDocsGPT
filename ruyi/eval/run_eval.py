@@ -185,11 +185,13 @@ def main():
     lines.append("- 正确率(语料内): **%d/%d = %.0f%%**" % (n_correct, n_in, correct_rate * 100))
     lines.append("- 幻觉率(语料外): **%d/%d = %.0f%%**" % (n_halluc, n_out, halluc_rate * 100))
     lines.append("")
-    lines.append("| # | 类型 | 命中 | 引用数 | 判定 | 问题 |")
-    lines.append("|---|---|---|---|---|---|")
+    lines.append("| # | 类型 | 命中 | 引用数 | 判定 | 问题 | 答案摘录 |")
+    lines.append("|---|---|---|---|---|---|---|")
     for r in rows:
-        lines.append("| %d | %s | %s | %d | %s | %s |" % (
-            r["id"], r["type"], "是" if r["hit"] else "否", r["n_src"], r["verdict"], r["q"]))
+        # 答案里的竖线会破坏 markdown 表格, 转义掉
+        ans = r["answer"].replace("|", "\\|")
+        lines.append("| %d | %s | %s | %d | %s | %s | %s |" % (
+            r["id"], r["type"], "是" if r["hit"] else "否", r["n_src"], r["verdict"], r["q"], ans))
     open(args.report, "w", encoding="utf-8").write("\n".join(lines) + "\n")
     print("\n报告已写入: %s" % args.report)
 
