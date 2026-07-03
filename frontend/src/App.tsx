@@ -1,0 +1,164 @@
+import './locale/i18n';
+
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Outlet, Route, Routes, useLocation } from 'react-router-dom';
+
+import Admin from './admin';
+import Agents from './agents';
+import SharedAgentGate from './agents/SharedAgentGate';
+import DocsGPT3 from './assets/cute_docsgpt3.svg';
+import ActionButtons from './components/ActionButtons';
+import AdminRoute from './components/AdminRoute';
+import Spinner from './components/Spinner';
+import { Button } from './components/ui/button';
+import UploadToast from './components/UploadToast';
+import Conversation from './conversation/Conversation';
+import { SharedConversation } from './conversation/SharedConversation';
+import { EventStreamProvider } from './events/EventStreamProvider';
+import { useDarkTheme, useMediaQuery } from './hooks';
+import useDataInitializer from './hooks/useDataInitializer';
+import useTokenAuth from './hooks/useTokenAuth';
+import Navigation from './Navigation';
+import PageNotFound from './PageNotFound';
+import Setting from './settings';
+import Teams from './settings/Teams';
+import Notification from './components/Notification';
+import ToolApprovalToast from './notifications/ToolApprovalToast';
+import TeamNotificationToast from './notifications/TeamNotificationToast';
+
+function AuthWrapper({ children }: { children: React.ReactNode }) {
+  const { t } = useTranslation();
+  const {
+    isAuthLoading,
+    oidcFailed,
+    oidcErrorCode,
+    oidcProviderName,
+    retryOidcLogin,
+  } = useTokenAuth();
+  useDataInitializer(isAuthLoading);
+
+  if (oidcFailed) {
+    const message =
+      oidcErrorCode === 'not_authorized'
+        ? t('auth.notAuthorized')
+        : oidcErrorCode === 'account_disabled'
+          ? t('auth.accountDisabled')
+          : t('auth.signInToContinue');
+    return (
+      <div className="flex h-screen flex-col items-center justify-center gap-6">
+        <img src={DocsGPT3} alt="DocsGPT" className="size-14" />
+        <p className="text-foreground max-w-md px-6 text-center text-sm dark:text-white">
+          {message}
+        </p>
+        <Button
+          type="button"
+          onClick={retryOidcLogin}
+          className="rounded-3xl px-5"
+          data-testid="oidc-signin"
+        >
+          {t('auth.signInWith', { provider: oidcProviderName || 'SSO' })}
+        </Button>
+      </div>
+    );
+  }
+  if (isAuthLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Spinner />
+      </div>
+    );
+  }
+  return <EventStreamProvider>{children}</EventStreamProvider>;
+}
+
+function MainLayout() {
+  const { isMobile, isTablet } = useMediaQuery();
+  const [navOpen, setNavOpen] = useState(!(isMobile || isTablet));
+
+  return (
+    <div className="bg-background relative h-screen overflow-hidden">
+      <Navigation navOpen={navOpen} setNavOpen={setNavOpen} />
+      <ActionButtons showNewChat={true} showShare={true} />
+      <div
+        className={`h-[calc(100dvh-64px)] overflow-auto transition-all duration-300 ease-in-out lg:h-screen ${
+          !(isMobile || isTablet)
+            ? `${navOpen ? 'lg:ml-72' : 'lg:ml-14'}`
+            : 'ml-0 lg:ml-16'
+        }`}
+      >
+        <Outlet />
+      </div>
+      <UploadToast />
+      <ToolApprovalToast />
+      <TeamNotificationToast />
+    </div>
+  );
+}
+export default function App() {
+  const [, , componentMounted] = useDarkTheme();
+  const location = useLocation();
+  const [showNotification, setShowNotification] = useState<boolean>(() => {
+    const saved = localStorage.getItem('showNotification');
+    return saved ? JSON.parse(saved) : true;
+  });
+  const notificationText = import.meta.env.VITE_NOTIFICATION_TEXT;
+  const notificationLink = import.meta.env.VITE_NOTIFICATION_LINK;
+  // Hide the changelog banner on public share routes — those pages are
+  // embedded / shared externally and shouldn't carry product chrome.
+  const isPublicShareRoute =
+    location.pathname.startsWith('/share/') ||
+    location.pathname.startsWith('/shared/');
+  if (!componentMounted) {
+    return <div />;
+  }
+  return (
+    <div className="relative h-full overflow-hidden">
+      {notificationLink &&
+        notificationText &&
+        showNotification &&
+        !isPublicShareRoute && (
+          <Notification
+            notificationText={notificationText}
+            notificationLink={notificationLink}
+            handleCloseNotification={() => {
+              setShowNotification(false);
+              localStorage.setItem('showNotification', 'false');
+            }}
+          />
+        )}
+      <Routes>
+        <Route
+          element={
+            <AuthWrapper>
+              <MainLayout />
+            </AuthWrapper>
+          }
+        >
+          <Route index element={<Conversation />} />
+          {/* One dynamic route (accepting "new" or a UUID) so the
+              /c/new → /c/<id> replace doesn't remount Conversation. */}
+          <Route path="/c/:conversationId" element={<Conversation />} />
+          <Route
+            path="/agents/:agentId/c/:conversationId"
+            element={<Conversation />}
+          />
+          <Route path="/settings/*" element={<Setting />} />
+          <Route path="/teams" element={<Teams />} />
+          <Route path="/agents/*" element={<Agents />} />
+          <Route
+            path="/admin/*"
+            element={
+              <AdminRoute>
+                <Admin />
+              </AdminRoute>
+            }
+          />
+        </Route>
+        <Route path="/share/:identifier" element={<SharedConversation />} />
+        <Route path="/shared/agent/:agentId" element={<SharedAgentGate />} />
+        <Route path="/*" element={<PageNotFound />} />
+      </Routes>
+    </div>
+  );
+}
