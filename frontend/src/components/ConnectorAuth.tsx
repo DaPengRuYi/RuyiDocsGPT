@@ -1,0 +1,271 @@
+import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
+
+import userService from '../api/services/userService';
+import { useDarkTheme } from '../hooks';
+import { selectToken } from '../preferences/preferenceSlice';
+import { Button } from './ui/button';
+
+interface ConnectorAuthProps {
+  provider: string;
+  onSuccess: (data: { session_token: string; user_email: string }) => void;
+  onError: (error: string) => void;
+  label?: string;
+  isConnected?: boolean;
+  userEmail?: string;
+  onDisconnect?: () => void;
+  errorMessage?: string;
+}
+
+const ConnectorAuth: React.FC<ConnectorAuthProps> = ({
+  provider,
+  onSuccess,
+  onError,
+  label,
+  isConnected = false,
+  userEmail = '',
+  onDisconnect,
+  errorMessage,
+}) => {
+  const { t } = useTranslation();
+  const token = useSelector(selectToken);
+  const [isDarkTheme] = useDarkTheme();
+  const completedRef = useRef(false);
+  const intervalRef = useRef<number | null>(null);
+  const authWindowRef = useRef<Window | null>(null);
+  // Hold the exact listener identity so unmount cleanup removes the same fn.
+  const messageHandlerRef = useRef<((event: MessageEvent) => void) | null>(
+    null,
+  );
+  // Tracks mount status so async ``fetch`` resolves after unmount don't
+  // call ``onSuccess`` / ``onError`` on a vanished parent.
+  const mountedRef = useRef(true);
+
+  const cleanup = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    if (messageHandlerRef.current) {
+      window.removeEventListener('message', messageHandlerRef.current as any);
+      messageHandlerRef.current = null;
+    }
+  };
+
+  const handleAuthMessage = (event: MessageEvent) => {
+    const successGeneric = event.data?.type === 'connector_auth_success';
+    const successProvider = event.data?.type === `${provider}_auth_success`;
+    const errorProvider = event.data?.type === `${provider}_auth_error`;
+
+    if (successGeneric || successProvider) {
+      completedRef.current = true;
+      cleanup();
+      authWindowRef.current = null;
+      onSuccess({
+        session_token: event.data.session_token,
+        user_email:
+          event.data.user_email ||
+          t('modals.uploadDoc.connectors.auth.connectedUser'),
+      });
+    } else if (errorProvider) {
+      completedRef.current = true;
+      cleanup();
+      authWindowRef.current = null;
+      onError(
+        event.data.error || t('modals.uploadDoc.connectors.auth.authFailed'),
+      );
+    }
+  };
+
+  const handleAuth = () => {
+    completedRef.current = false;
+    // Close any popup left over from a previous click before wiping
+    // the ref — otherwise the old window keeps living with no
+    // interval watching it and no listener handling its messages.
+    if (authWindowRef.current && !authWindowRef.current.closed) {
+      authWindowRef.current.close();
+    }
+    authWindowRef.current = null;
+    cleanup();
+
+    // Synchronous popup inside the click; navigated below after the
+    // async URL fetch resolves. Otherwise Safari blocks it as non-gesture.
+    const authWindow = window.open(
+      'about:blank',
+      `${provider}-auth`,
+      'width=500,height=600,scrollbars=yes,resizable=yes',
+    );
+    if (!authWindow) {
+      onError(t('modals.uploadDoc.connectors.auth.popupBlocked'));
+      return;
+    }
+    authWindowRef.current = authWindow;
+
+    (async () => {
+      try {
+        const authResponse = await userService.getConnectorAuthUrl(
+          provider,
+          token,
+        );
+        if (!mountedRef.current) {
+          authWindow.close();
+          return;
+        }
+
+        if (!authResponse.ok) {
+          authWindow.close();
+          throw new Error(
+            `${t('modals.uploadDoc.connectors.auth.authUrlFailed')}: ${authResponse.status}`,
+          );
+        }
+
+        const authData = await authResponse.json();
+        if (!mountedRef.current) {
+          authWindow.close();
+          return;
+        }
+        if (!authData.success || !authData.authorization_url) {
+          authWindow.close();
+          throw new Error(
+            authData.error ||
+              t('modals.uploadDoc.connectors.auth.authUrlFailed'),
+          );
+        }
+
+        if (authWindow.closed) {
+          // User closed the placeholder before we resolved.
+          authWindowRef.current = null;
+          onError(t('modals.uploadDoc.connectors.auth.authCancelled'));
+          return;
+        }
+        authWindow.location.href = authData.authorization_url;
+
+        messageHandlerRef.current = handleAuthMessage;
+        window.addEventListener('message', handleAuthMessage as any);
+
+        const checkClosed = window.setInterval(() => {
+          if (authWindow.closed) {
+            clearInterval(checkClosed);
+            intervalRef.current = null;
+            if (messageHandlerRef.current) {
+              window.removeEventListener(
+                'message',
+                messageHandlerRef.current as any,
+              );
+              messageHandlerRef.current = null;
+            }
+            authWindowRef.current = null;
+            if (!completedRef.current) {
+              onError(t('modals.uploadDoc.connectors.auth.authCancelled'));
+            }
+          }
+        }, 1000);
+        intervalRef.current = checkClosed;
+      } catch (error) {
+        if (!authWindow.closed) {
+          authWindow.close();
+        }
+        authWindowRef.current = null;
+        if (!mountedRef.current) return;
+        onError(
+          error instanceof Error
+            ? error.message
+            : t('modals.uploadDoc.connectors.auth.authFailed'),
+        );
+      }
+    })();
+  };
+
+  useEffect(() => {
+    // Re-arm on mount; React 19 strict-mode's double-invoke would otherwise
+    // leave this stuck at false from the prior cleanup, aborting later awaits.
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      cleanup();
+      if (authWindowRef.current && !authWindowRef.current.closed) {
+        authWindowRef.current.close();
+      }
+      authWindowRef.current = null;
+    };
+  }, []);
+
+  return (
+    <>
+      {errorMessage && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-[#E60000] bg-transparent p-2 dark:border-[#D42626] dark:bg-[#D426261A]">
+          <svg
+            width="30"
+            height="30"
+            viewBox="0 0 30 30"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M7.09974 24.5422H22.9C24.5156 24.5422 25.5228 22.7901 24.715 21.3947L16.8149 7.74526C16.007 6.34989 13.9927 6.34989 13.1848 7.74526L5.28471 21.3947C4.47686 22.7901 5.48405 24.5422 7.09974 24.5422ZM14.9998 17.1981C14.4228 17.1981 13.9507 16.726 13.9507 16.149V14.0507C13.9507 13.4736 14.4228 13.0015 14.9998 13.0015C15.5769 13.0015 16.049 13.4736 16.049 14.0507V16.149C16.049 16.726 15.5769 17.1981 14.9998 17.1981ZM16.049 21.3947H13.9507V19.2964H16.049V21.3947Z"
+              fill={isDarkTheme ? '#EECF56' : '#E60000'}
+            />
+          </svg>
+
+          <span
+            className="text-sm text-[#E60000] dark:text-red-400"
+            style={{
+              fontFamily: 'Inter',
+              lineHeight: '100%',
+            }}
+          >
+            {errorMessage}
+          </span>
+        </div>
+      )}
+
+      {isConnected ? (
+        <div className="mb-4">
+          <div className="flex w-full items-center justify-between rounded-lg bg-[#8FDD51] px-4 py-2 text-sm font-medium text-black">
+            <div className="flex max-w-[500px] items-center gap-2">
+              <svg className="h-4 w-4" viewBox="0 0 24 24">
+                <path
+                  fill="currentColor"
+                  d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                />
+              </svg>
+              <span>
+                {t('modals.uploadDoc.connectors.auth.connectedAs', {
+                  email: userEmail,
+                })}
+              </span>
+            </div>
+            {onDisconnect && (
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                onClick={onDisconnect}
+                className="h-auto p-0 text-xs text-black underline hover:text-gray-700"
+              >
+                {t('modals.uploadDoc.connectors.auth.disconnect')}
+              </Button>
+            )}
+          </div>
+        </div>
+      ) : (
+        <Button
+          type="button"
+          onClick={handleAuth}
+          className="w-full rounded-lg bg-blue-500 px-4 py-3 text-white hover:bg-blue-600"
+        >
+          <svg className="h-5 w-5" viewBox="0 0 24 24">
+            <path
+              fill="currentColor"
+              d="M6.28 3l5.72 10H24l-5.72-10H6.28zm11.44 0L12 13l5.72 10H24L18.28 3h-.56zM0 13l5.72 10h5.72L5.72 13H0z"
+            />
+          </svg>
+          {label}
+        </Button>
+      )}
+    </>
+  );
+};
+
+export default ConnectorAuth;
