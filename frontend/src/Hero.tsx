@@ -139,7 +139,7 @@ export default function Hero({
       {/* Header Section */}
       <div className="flex grow flex-col items-center justify-center pt-8 md:pt-0">
         <div className="mb-px flex items-center">
-          <span className="text-4xl font-semibold">DocsGPT</span>
+          <span className="text-4xl font-semibold">如意知识库工厂</span>
           <img className="mb-1 inline w-14" src={DocsGPT3} alt="docsgpt" />
         </div>
         {/* Model Selector */}
