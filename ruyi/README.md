@@ -17,7 +17,8 @@ ruyi/
 │  ├─ ruyi-stop.ps1          一键停止
 │  └─ ruyi-sync-corpus.ps1   评测语料同步(书稿 13 章 → eval/corpus)
 ├─ docs/
-│  └─ UPSTREAM_SYNC.md       上游同步机制与二开改动清单(基线 arc53/DocsGPT v0.17.2)
+│  ├─ UPSTREAM_SYNC.md       上游同步机制与二开改动清单(基线 arc53/DocsGPT v0.17.2)
+│  └─ BOOK_RELEASE.md        书线版本与发行约定(公开主仓 + bk-chXX 章节标签)
 └─ eval/
    ├─ README.md              评测集使用说明
    ├─ testset.json           中文回归评测集 v2(11 语料内 + 1 语料外测幻觉)
