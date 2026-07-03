@@ -3,6 +3,17 @@
 > 目的：让 RuyiDocsGPT 纯二开**不变成孤儿分叉**。上游有安全补丁/新功能时，能可控地同步进来。
 > 纪律：只 `fetch` 上游，**永不向上游 push**（已在 git 配置里禁用）。
 
+## 0. 分支模型（重要）
+
+本仓库**只有两个分支**：
+
+```text
+main   稳定分支(可交付/演示的版本)
+dev    集成/日常工作分支(开发、上游同步都在这里做)
+```
+
+**不要新开 feature/sync/* 等其它分支。** 所有开发和上游同步都在 `dev` 上进行，评测通过后再合并到 `main`。
+
 ## 1. 远程配置（已就绪）
 
 ```text
@@ -46,8 +57,8 @@ git fetch upstream
 # 2. 看上游有哪些新提交
 git log --oneline HEAD..upstream/main | head -50
 
-# 3. 开一个同步分支, 不在 main 上直接搞
-git switch -c sync/upstream-$(date +%Y%m%d)   # 分支名手动填日期亦可
+# 3. 切到 dev(同步/开发都在 dev 上做, 不新开分支; main 保持稳定)
+git switch dev
 
 # 4a. 只要某个安全补丁 / 具体修复 → cherry-pick(推荐, 影响面小)
 git cherry-pick <upstream_commit_sha>
@@ -59,16 +70,16 @@ git merge upstream/main
 #    先启动服务, 导入 ruyi/eval/corpus, 再:
 #    .venv\Scripts\python.exe -X utf8 ruyi\eval\run_eval.py --active-docs <source_id>
 
-# 6. 评测通过 → 合回 main → 推送到我们自己的仓库
-git switch main && git merge --no-ff sync/upstream-YYYYMMDD
-git push origin main
+# 6. 评测通过 → 合到 main → 推送两个分支
+git switch main && git merge --no-ff dev
+git push origin main dev
 ```
 
 ## 5. 冲突处理要点
 
 - 冲突集中在第 3 节清单里的文件时，**保住我们的二开改动**（比如 alembic.ini 的 ASCII 破折号别被上游覆盖回 em dash）。
 - `ruyi/` 是独立目录，几乎不会和上游冲突——这就是把二开资产隔离出来的价值。
-- 拿不准的上游改动，先在 `sync/*` 分支验证 + 跑评测，别直接进 main。
+- 拿不准的上游改动，先在 `dev` 上验证 + 跑评测，别直接进 `main`。
 
 ## 6. 什么时候值得同步
 
