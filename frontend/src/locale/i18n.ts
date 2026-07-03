@@ -37,7 +37,8 @@ i18n
         translation: de,
       },
     },
-    fallbackLng: 'en',
+    fallbackLng: 'zh',
+    load: 'languageOnly',
     detection: {
       order: ['localStorage', 'navigator'],
       caches: ['localStorage'],
