@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # RuyiDocsGPT 一键停止 (Windows PowerShell)
 #   powershell -ExecutionPolicy Bypass -File .\ruyi\scripts\ruyi-stop.ps1
 # 停止本仓库启动的后端(uvicorn) 与 worker(celery)。

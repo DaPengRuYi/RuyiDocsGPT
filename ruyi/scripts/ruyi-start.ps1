@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # RuyiDocsGPT 一键启动 (Windows PowerShell)
 #   powershell -ExecutionPolicy Bypass -File .\ruyi\scripts\ruyi-start.ps1
 # 启动: 后端 uvicorn(:7091) + 文档索引 worker(celery, solo 池)

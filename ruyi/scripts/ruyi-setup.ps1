@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # RuyiDocsGPT 一键环境搭建 (Windows PowerShell)
 #   powershell -ExecutionPolicy Bypass -File .\ruyi\scripts\ruyi-setup.ps1
 # 做的事: 建 venv -> 装依赖 -> 检查 Redis/Postgres -> 提示配 .env
