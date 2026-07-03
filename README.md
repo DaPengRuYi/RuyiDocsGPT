@@ -1,169 +1,78 @@
-<h1 align="center">
-  DocsGPT  🦖
-</h1>
+# 如意知识库工厂 RuyiDocsGPT
 
-<p align="center">
-  <strong>Private AI for agents, assistants and enterprise search</strong>
-</p>
+**私有知识库 RAG 问答系统**：上传你自己的资料，问出带引用来源的答案。本仓库是开源项目 [DocsGPT](https://github.com/arc53/DocsGPT) 的中文纯二开，也是图书**《大鹏 RAG 实战：如意知识库工厂》**的主线项目——书里教你做的，就是这个仓库里的东西。
 
-<p align="left">
-  <strong><a href="https://www.docsgpt.cloud/">DocsGPT</a></strong> is an open-source AI platform for building intelligent agents and assistants. Features Agent Builder, deep research tools, document analysis (PDF, Office, web content, and audio), Multi-model support (choose your provider or run locally), and rich API connectivity for agents with actionable tools and integrations. Deploy anywhere with complete privacy control.
-</p>
+> 出品：大鹏 AI 教育 · 张大鹏 ｜ 上游协议 MIT，本仓库同协议开放（见 [LICENSE](LICENSE)）
 
-<div align="center">
-  
-  <a href="https://github.com/arc53/DocsGPT">![link to main GitHub showing Stars number](https://img.shields.io/github/stars/arc53/docsgpt?style=social)</a>
-  <a href="https://github.com/arc53/DocsGPT">![link to main GitHub showing Forks number](https://img.shields.io/github/forks/arc53/docsgpt?style=social)</a>
-  <a href="https://github.com/arc53/DocsGPT/blob/main/LICENSE">![link to license file](https://img.shields.io/github/license/arc53/docsgpt)</a>
-  <a href="https://www.bestpractices.dev/projects/9907"><img src="https://www.bestpractices.dev/projects/9907/badge"></a>
-  <a href="https://discord.gg/vN7YFfdMpj">![link to discord](https://img.shields.io/discord/1070046503302877216)</a>
-  <a href="https://x.com/docsgptai">![X (formerly Twitter) URL](https://img.shields.io/twitter/follow/docsgptai)</a>
+## 这个项目是什么
 
-<a href="https://docs.docsgpt.cloud/quickstart">⚡️ Quickstart</a> • <a href="https://app.docsgpt.cloud/">☁️ Cloud Version</a> • <a href="https://discord.gg/vN7YFfdMpj">💬 Discord</a>
-<br>
-<a href="https://docs.docsgpt.cloud/">📖 Documentation</a> • <a href="https://github.com/arc53/DocsGPT/blob/main/CONTRIBUTING.md">👫 Contribute</a> • <a href="https://blog.docsgpt.cloud/">🗞 Blog</a>
-<br>
+- **对使用者**：一套能私有部署的中文知识库问答系统，默认接国产模型（硅基流动 Qwen2.5-72B）+ 本地中文向量（bge-small-zh-v1.5）+ 本地 FAISS，资料不出你的机器。
+- **对学习者**：一个"从跑通到二开到交付"的完整 RAG 实战载体，配套图书逐章带你走，每章对应仓库的一个可检出状态（见下方版本线）。
+- **对二开研究者**：一个"纯二开不变孤儿分叉"的工程样板——二开资产全部隔离在 `ruyi/`，上游同步机制与改动清单见 [ruyi/docs/UPSTREAM_SYNC.md](ruyi/docs/UPSTREAM_SYNC.md)。
 
-</div>
+## 快速上手（Windows PowerShell）
 
+```powershell
+git clone https://github.com/DaPengRuYi/RuyiDocsGPT.git
+cd RuyiDocsGPT
 
-<div align="center">
-  <br>
-<img src="https://d3dg1063dc54p9.cloudfront.net/videos/demo-26.gif" alt="video-example-of-docs-gpt" width="800" height="480">
-</div>
-<h3 align="left">
-  <strong>Key Features:</strong>
-</h3>
-<ul align="left">
-    <li><strong>🗂️ Wide Format Support:</strong> Reads PDF, DOCX, CSV, XLSX, EPUB, MD, RST, HTML, MDX, JSON, PPTX, images, and audio files such as MP3, WAV, M4A, OGG, and WebM.</li>
-    <li><strong>🎙️ Speech Workflows:</strong> Record voice input into chat, transcribe audio on the backend, and ingest meeting recordings or voice notes as searchable knowledge.</li>
-    <li><strong>🌐 Web & Data Integration:</strong> Ingests from URLs, sitemaps, Reddit, GitHub and web crawlers.</li>
-    <li><strong>✅ Reliable Answers:</strong> Get accurate, hallucination-free responses with source citations viewable in a clean UI.</li>
-    <li><strong>🔑 Streamlined API Keys:</strong>  Generate keys linked to your settings, documents, and models, simplifying chatbot and integration setup.</li>
-    <li><strong>🔗 Actionable Tooling:</strong> Connect to APIs, tools, and other services to enable LLM actions.</li>
-    <li><strong>🧩 Pre-built Integrations:</strong> Use readily available HTML/React chat widgets, search tools, Discord/Telegram bots, and more.</li>
-    <li><strong>🔌 Flexible Deployment:</strong> Works with major LLMs (OpenAI, Google, Anthropic) and local models (Ollama, llama_cpp).</li>
-    <li><strong>🏢 Secure & Scalable:</strong> Run privately and securely with Kubernetes support, designed for enterprise-grade reliability.</li>
-</ul>
+# 1. 一键搭环境(venv + 依赖 + 检查 Redis/Postgres)
+powershell -ExecutionPolicy Bypass -File .\ruyi\scripts\ruyi-setup.ps1
 
-## Roadmap
-- [x] Agent Workflow Builder with conditional nodes ( February 2026 )
-- [x] Research mode ( March 2026 )
-- [x] SharePoint & Confluence connectors ( March – April 2026 )
-- [x] Postgres migration for user data ( April 2026 )
-- [x] OpenTelemetry observability ( April 2026 )
-- [x] Bring Your Own Model (BYOM) ( April 2026 )
-- [x] Agent scheduling (RedBeat-backed) ( April 2026 )
-- [x] Notifications & conversation search ( May 2026 )
-- [x] Analytics & logs revamp with per-agent attribution ( June 2026 )
-- [x] OIDC / SSO login with SCIM provisioning & groups ( June 2026 )
-- [x] Admin dashboard & role-based access control (RBAC) ( June 2026 )
-- [x] Agent import / export ( June 2026 )
-- [x] Teams with team-scoped sharing & roles ( June 2026 )
+# 2. 配置(复制模板, 填入你自己的硅基流动 key)
+Copy-Item .\ruyi\.env.example .\.env
 
-You can find our full roadmap [here](https://github.com/orgs/arc53/projects/2). Please don't hesitate to contribute or create issues, it helps us improve DocsGPT!
-
-### Production Support / Help for Companies:
-
-We're eager to provide personalized assistance when deploying your DocsGPT to a live environment.
-
-[Get a Demo :wave:](https://www.docsgpt.cloud/contact)⁠
-
-[Send Email :email:](mailto:support@docsgpt.cloud?subject=DocsGPT%20support%2Fsolutions)
-
-## Join the Lighthouse Program 🌟
-
-Calling all developers and GenAI innovators! The **DocsGPT Lighthouse Program** connects technical leaders actively deploying or extending DocsGPT in real-world scenarios. Collaborate directly with our team to shape the roadmap, access priority support, and build enterprise-ready solutions with exclusive community insights.
-
-[Learn More & Apply →](https://docs.google.com/forms/d/1KAADiJinUJ8EMQyfTXUIGyFbqINNClNR3jBNWq7DgTE)
-
-## QuickStart
-
-> [!Note]
-> Make sure you have [Docker](https://docs.docker.com/engine/install/) installed
-
-A more detailed [Quickstart](https://docs.docsgpt.cloud/quickstart) is available in our documentation
-
-1. **Clone the repository:**
-
-   ```bash
-   git clone https://github.com/arc53/DocsGPT.git
-   cd DocsGPT
-   ```
-
-**For macOS and Linux:**
-
-2. **Run the setup script:**
-
-   ```bash
-   ./setup.sh
-   ```
-
-**For Windows:**
-
-2. **Run the PowerShell setup script:**
-
-   ```powershell
-   PowerShell -ExecutionPolicy Bypass -File .\setup.ps1
-   ```
-
-Either script will guide you through setting up DocsGPT. Five options available: using the public API, running locally, connecting to a local inference engine, using a cloud API provider, or build the docker image locally. Scripts will automatically configure your `.env` file and handle necessary downloads and installations based on your chosen option.
-
-**Navigate to http://localhost:5173/**
-
-To stop DocsGPT, open a terminal in the `DocsGPT` directory and run:
-
-```bash
-docker compose -f deployment/docker-compose.yaml down
+# 3. 一键启动(后端 :7091 + 索引 worker)
+powershell -ExecutionPolicy Bypass -File .\ruyi\scripts\ruyi-start.ps1
 ```
 
-(or use the specific `docker compose down` command shown after running the setup script).
+`http://127.0.0.1:7091/api/health` 返回 `{"status":"ok"}` 即启动成功。详细说明与常见坑见 [ruyi/README.md](ruyi/README.md)。
 
-> [!Note]
-> For development environment setup instructions, please refer to the [Development Environment Guide](https://docs.docsgpt.cloud/Deploying/Development-Environment).
+## 与书的对照（版本线）
 
-## Contributing
+书的每一章正文定稿时，仓库会打一个 `bk-chXX` 标签。**照书操作时先检出对应标签**，保证你手里的代码和书完全一致：
 
-Please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) file for information about how to get involved. We welcome issues, questions, and pull requests.
+```bash
+git checkout bk-ch03   # 回到与书第 3 章一致的状态
+```
 
-## Architecture
+| 书的阶段 | 章节 | 对应仓库内容 | 标签 |
+|---|---|---|---|
+| 理解 RAG | ch01–02 | 认知章，不碰代码 | - |
+| 跑通系统 | ch03–04 | `ruyi/scripts/` 一键脚本、整体架构 | `bk-ch03` ✅ |
+| 打通主链路 | ch05–08 | `application/`（解析/向量/检索/问答/模型接入）、`ruyi/.env.example` | 待发布 |
+| 纯二开 | ch09 | `ruyi/` 二开层、`ruyi/docs/UPSTREAM_SYNC.md` | 待发布 |
+| 部署交付 | ch10 | 部署脚本与交付文档 | 待发布 |
+| 评测运维 | ch11 | `ruyi/eval/` 回归评测集 | 待发布 |
+| 做成产品 | ch12 | 全仓库收口 | 待发布 |
 
-![Architecture chart](https://github.com/user-attachments/assets/fc6a7841-ddfc-45e6-b5a0-d05fe648cbe2)
+版本线与发行约定详见 [ruyi/docs/BOOK_RELEASE.md](ruyi/docs/BOOK_RELEASE.md)。
 
-## Project Structure
+## 特色：用这本书问这本书
 
-- Application - Flask app (main application).
+本仓库的回归评测语料就是书稿本身（`ruyi/eval/corpus/`）：把 13 章书稿导入知识库，问"这本书的作者是谁"，它回答"张大鹏"并给出指向章节的引用；问书里没有的"纸质版售价"，它老实拒答。
 
-- Extensions - Extensions, like react widget or discord bot.
+2026-07-03 实测（硅基流动 Qwen2.5-72B + 本地 bge-small-zh-v1.5）：
 
-- Frontend - Frontend uses <a href="https://vitejs.dev/">Vite</a> and <a href="https://react.dev/">React</a>.
+| 指标 | 结果 |
+|---|---|
+| 命中率（有引用） | 12/12 = 100% |
+| 正确率（语料内） | 11/11 = 100% |
+| 幻觉率（语料外） | 0/1 = 0% |
 
-- Scripts - Miscellaneous scripts.
+跑法见 [ruyi/eval/README.md](ruyi/eval/README.md)。
 
-## Code Of Conduct
+## 目录结构
 
-We as members, contributors, and leaders, pledge to make participation in our community a harassment-free experience for everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex characteristics, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation. Please refer to the [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) file for more information about contributing.
+```text
+application/   上游主流程(Flask/uvicorn 后端、解析、检索、LLM、worker)
+frontend/      上游前端(Vite + React)
+extensions/    上游扩展(聊天挂件、Discord/Telegram 机器人等)
+ruyi/          如意二开层(一键脚本、回归评测、上游同步与发行文档) ← 我们的东西都在这
+```
 
-## Many Thanks To Our Contributors⚡
+## 分支与上游
 
-<a href="https://github.com/arc53/DocsGPT/graphs/contributors" alt="View Contributors">
-  <img src="https://contrib.rocks/image?repo=arc53/DocsGPT" alt="Contributors" />
-</a>
-
-## License
-
-The source code license is [MIT](https://opensource.org/license/mit/), as described in the [LICENSE](LICENSE) file.
-
-## This project is supported by:
-
-<p>
-  <a href="https://www.digitalocean.com/?utm_medium=opensource&utm_source=DocsGPT">
-    <img src="https://opensource.nyc3.cdn.digitaloceanspaces.com/attribution/assets/SVG/DO_Logo_horizontal_blue.svg" width="201px">
-  </a>
-</p>
-<p>
-  <a href="https://get.neon.com/docsgpt">
-    <img width="201" alt="color" src="https://github.com/user-attachments/assets/7d9813b7-0e6d-403f-b5af-68af066b326f" />
-  </a>
-  
-</p>
+- 只有两个分支：`main`（稳定，可交付）和 `dev`（日常开发 + 上游同步）。
+- 基线为 arc53/DocsGPT v0.17.2（main 分支 2026-06-24 快照）；`upstream` 仅 fetch，永不向上游 push。
+- 上游原版 README 留档在 [ruyi/docs/UPSTREAM_README.md](ruyi/docs/UPSTREAM_README.md)。感谢 [arc53/DocsGPT](https://github.com/arc53/DocsGPT) 团队的优秀工作。

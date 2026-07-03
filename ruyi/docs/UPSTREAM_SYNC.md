@@ -45,6 +45,11 @@ git remote -v
 | `.gitignore` | 配置 | 追加排除 `tests/e2e/fixtures/docs/oversize.pdf` | 上游自带 55MB 测试大文件, 二开不需要 | 是 |
 | `tests/e2e/fixtures/docs/oversize.pdf` | 删除 | 从仓库移除(55MB) | 同上 | 是(可从上游取回) |
 | `ruyi/` | 新增 | 如意二开层(脚本/评测/文档/配置模板) | 教学与交付资产, 与上游隔离 | 是(独立目录) |
+| `README.md` | 改源码 | 整体替换为中文门面(书对照表/快速上手/评测跑分), 原版留档 `ruyi/docs/UPSTREAM_README.md` | 仓库已公开, 是书的读者入口 | 是(留档可还原) |
+| `frontend/index.html` | 改源码 | `<title>` 改「如意知识库工厂 RuyiDocsGPT」, `lang` 改 zh-CN | 品牌化/中文化 | 是 |
+| `frontend/src/Hero.tsx` | 改源码 | 首页主标题 DocsGPT → 如意知识库工厂(logo 图暂保留) | 品牌化 | 是 |
+| `frontend/src/locale/i18n.ts` | 改源码 | `fallbackLng` en→zh, 加 `load:'languageOnly'`(zh-CN 浏览器命中 zh 包) | 默认中文 | 是 |
+| `frontend/src/locale/zh.json` | 改源码 | 中文语言包内品牌名 DocsGPT → 如意知识库工厂(14 处) | 品牌化 | 是 |
 
 > 原则：**能走配置就不改源码**。默认模型、品牌、中文文案优先进 `.env` / `ruyi/`，不散改核心逻辑。必须改源码的（如上面 alembic.ini 这类 bug 适配）单独登记在本表。
 
