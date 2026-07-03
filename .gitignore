@@ -205,3 +205,7 @@ tests/e2e/.e2e-last-run.json
 
 # 上游 e2e 超大测试夹具(55MB), 二开不需要, 排除
 tests/e2e/fixtures/docs/oversize.pdf
+
+# 如意二开层运行产物
+ruyi/logs/
+ruyi/eval/last_report.md
