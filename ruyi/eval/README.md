@@ -6,11 +6,13 @@
 
 评测语料 = 《大鹏 RAG 实战：如意知识库工厂》中文版 13 章书稿。导入书稿、再问书里的问题，答案来自书本身、引用指向具体章节——**自指闭环**：零版权顾虑、演示效果直观、语料随书更新永不过时。
 
+> **注意：书稿不随仓库开源**（2026-07-04 决策，见 `ruyi/docs/BOOK_RELEASE.md` 第 5 节）。`corpus/*.md` 已被 `.gitignore`，只存在于有书稿的本地机器；克隆仓库的读者请自备任意 md 资料作语料，并按资料改写 `testset.json`（见文末「扩展」）。
+
 ```text
 eval/
 ├─ testset.json    12 题(11 语料内 + 1 语料外测幻觉) + 关键词判分 + 拒答措辞
 ├─ run_eval.py     运行器: 调 /api/answer, 判分, 输出命中率/正确率/幻觉率 + markdown 报告
-├─ corpus/         语料 = 书稿 13 章(ch00-ch12, ASCII 文件名, 由同步脚本生成)
+├─ corpus/         语料 = 书稿 13 章(ch00-ch12, ASCII 文件名, 由同步脚本生成; 不入库)
 └─ last_report.md  最近一次评测报告(运行后生成, 含答案摘录可回溯)
 ```
 
@@ -56,7 +58,7 @@ Q12 [out_of_corpus] hit=True src=20 -> 正确拒答
 powershell -ExecutionPolicy Bypass -File .\ruyi\scripts\ruyi-sync-corpus.ps1
 ```
 
-书稿位置写死在脚本顶部（`D:\notes\RuyiBookCourse\图书\AI 开发\大鹏 RAG 实战：如意知识库工厂\中文版`）。没有书稿的机器不用跑：仓库内 `corpus/` 已自带同步好的副本。**书稿加了新章/改了事实（端口、模型名这些），记得同步后重导语料、检查 testset 关键词是否还成立。**
+书稿位置写死在脚本顶部（`D:\notes\RuyiBookCourse\图书\AI 开发\大鹏 RAG 实战：如意知识库工厂\中文版`）。没有书稿的机器跑不了同步脚本，也拿不到书稿语料（不随仓库分发），自备 md 资料即可。**书稿加了新章/改了事实（端口、模型名这些），记得同步后重导语料、检查 testset 关键词是否还成立。**
 
 ## 基线目标（建议）
 
