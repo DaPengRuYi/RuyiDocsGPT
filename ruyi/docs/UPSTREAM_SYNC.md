@@ -50,6 +50,7 @@ git remote -v
 | `frontend/src/Hero.tsx` | 改源码 | 首页主标题 DocsGPT → 如意知识库工厂(logo 图暂保留) | 品牌化 | 是 |
 | `frontend/src/locale/i18n.ts` | 改源码 | `fallbackLng` en→zh, 加 `load:'languageOnly'`(zh-CN 浏览器命中 zh 包) | 默认中文 | 是 |
 | `frontend/src/locale/zh.json` | 改源码 | 中文语言包内品牌名 DocsGPT → 如意知识库工厂(14 处) | 品牌化 | 是 |
+| `.github/dependabot.yml` | 删除 | 停用 dependabot 自动依赖 PR | 机器人 PR 从旧历史切分支, 妨碍书稿历史清除; 且本仓库 Actions 已禁用, 依赖升级随上游同步走 | 是(可从上游取回) |
 
 > 原则：**能走配置就不改源码**。默认模型、品牌、中文文案优先进 `.env` / `ruyi/`，不散改核心逻辑。必须改源码的（如上面 alembic.ini 这类 bug 适配）单独登记在本表。
 
