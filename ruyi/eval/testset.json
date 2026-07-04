@@ -2,19 +2,327 @@
   "name": "RuyiDocsGPT 中文回归评测集 v2（书稿自指语料：用这本书问这本书）",
   "corpus_note": "语料为《大鹏 RAG 实战：如意知识库工厂》中文版 13 章（ruyi/eval/corpus/，由 ruyi/scripts/ruyi-sync-corpus.ps1 从书稿同步，文件名已转 ASCII 规避中文文件名上传坑）。评测前需把 corpus 导入为一个 source，取其 source_id 传给 run_eval.py（或用 --ingest 自动导入）。",
   "scoring_note": "命中=返回了引用分段; 正确(语料内)=答案包含全部 expect_keywords(不区分大小写子串); 语料外(测幻觉)=答案应出现拒答措辞且不编造, 编造即计为幻觉。关键词判分是启发式回归基线, 不等于人工精评。",
-  "refusal_phrases": ["没有提到", "未提到", "无法回答", "没有找到", "未找到", "不包含", "没有相关", "无法从", "文档中没有", "资料中没有", "未能找到", "无法确定", "没有说明", "没有提供", "没有包含", "未提供", "无法提供", "没有给出", "未包含", "并未提到", "并未提及", "没有涉及", "未涉及", "没有这方面", "查不到", "找不到", "抱歉", "未被涵盖", "未涵盖", "没有涵盖", "未被提及", "未被包含", "无相关", "不在文档", "不在资料", "不能提供", "不存在"],
+  "refusal_phrases": [
+    "没有提到",
+    "未提到",
+    "无法回答",
+    "没有找到",
+    "未找到",
+    "不包含",
+    "没有相关",
+    "无法从",
+    "文档中没有",
+    "资料中没有",
+    "未能找到",
+    "无法确定",
+    "没有说明",
+    "没有提供",
+    "没有包含",
+    "未提供",
+    "无法提供",
+    "没有给出",
+    "未包含",
+    "并未提到",
+    "并未提及",
+    "没有涉及",
+    "未涉及",
+    "没有这方面",
+    "查不到",
+    "找不到",
+    "抱歉",
+    "未被涵盖",
+    "未涵盖",
+    "没有涵盖",
+    "未被提及",
+    "未被包含",
+    "无相关",
+    "不在文档",
+    "不在资料",
+    "不能提供",
+    "不存在",
+    "没有被提及",
+    "没有被包含",
+    "无法基于",
+    "无法根据",
+    "未被提到",
+    "文档里没有",
+    "资料里没有",
+    "无法给出"
+  ],
   "questions": [
-    {"id": 1, "type": "in_corpus", "q": "这本书的作者是谁？这本书要把哪个开源项目二开成什么系统？", "expect_keywords": ["张大鹏", "DocsGPT", "如意知识库工厂"]},
-    {"id": 2, "type": "in_corpus", "q": "RAG 的四步原理分别是什么？", "expect_keywords": ["切分", "索引", "检索", "生成"]},
-    {"id": 3, "type": "in_corpus", "q": "书里说大模型有哪两个天生短板？", "expect_keywords": ["截止", "私有"]},
-    {"id": 4, "type": "in_corpus", "q": "书里说 RAG 有哪四个价值？", "expect_keywords": ["幻觉", "私有", "更新", "溯源"]},
-    {"id": 5, "type": "in_corpus", "q": "学完这本书能做到哪四个「能」？", "expect_keywords": ["能讲", "能跑", "能改", "能部署"]},
-    {"id": 6, "type": "in_corpus", "q": "DocsGPT 本地原生跑起来需要同时转哪「四件套」零件？", "expect_keywords": ["后端", "worker", "Redis", "FAISS"]},
-    {"id": 7, "type": "in_corpus", "q": "在 Windows 上启动 Celery 索引 worker 有什么特殊讲究？为什么？", "expect_keywords": ["solo"]},
-    {"id": 8, "type": "in_corpus", "q": "中文 Windows 下后端一启动就报 GBK 编码错误，问题出在哪个配置文件、怎么修？", "expect_keywords": ["alembic", "破折号"]},
-    {"id": 9, "type": "in_corpus", "q": "这本书默认接哪家的大模型 API？用的哪个本地向量模型？", "expect_keywords": ["硅基流动", "bge-small-zh"]},
-    {"id": 10, "type": "in_corpus", "q": "本地原生启动后，后端跑在哪个端口？健康检查访问哪个地址？", "expect_keywords": ["7091", "/api/health"]},
-    {"id": 11, "type": "in_corpus", "q": "RuyiDocsGPT 有哪三种交付形态？", "expect_keywords": ["本地运行", "教学演示", "可部署"]},
-    {"id": 12, "type": "out_of_corpus", "q": "《大鹏 RAG 实战：如意知识库工厂》这本书由哪家出版社出版？书号 ISBN 是多少？", "refusal_expected": true}
+    {
+      "id": 1,
+      "type": "in_corpus",
+      "q": "这本书的作者是谁？这本书要把哪个开源项目二开成什么系统？",
+      "expect_keywords": [
+        "张大鹏",
+        "DocsGPT",
+        "如意知识库工厂"
+      ]
+    },
+    {
+      "id": 2,
+      "type": "in_corpus",
+      "q": "RAG 的四步原理分别是什么？",
+      "expect_keywords": [
+        "切分",
+        "索引",
+        "检索",
+        "生成"
+      ]
+    },
+    {
+      "id": 3,
+      "type": "in_corpus",
+      "q": "书里说大模型有哪两个天生短板？",
+      "expect_keywords": [
+        "截止",
+        "私有"
+      ]
+    },
+    {
+      "id": 4,
+      "type": "in_corpus",
+      "q": "书里说 RAG 有哪四个价值？",
+      "expect_keywords": [
+        "幻觉",
+        "私有",
+        "更新",
+        "溯源"
+      ]
+    },
+    {
+      "id": 5,
+      "type": "in_corpus",
+      "q": "学完这本书能做到哪四个「能」？",
+      "expect_keywords": [
+        "能讲",
+        "能跑",
+        "能改",
+        "能部署"
+      ]
+    },
+    {
+      "id": 6,
+      "type": "in_corpus",
+      "q": "DocsGPT 本地原生跑起来需要同时转哪「四件套」零件？",
+      "expect_keywords": [
+        "后端",
+        "worker",
+        "Redis",
+        "FAISS"
+      ]
+    },
+    {
+      "id": 7,
+      "type": "in_corpus",
+      "q": "在 Windows 上启动 Celery 索引 worker 有什么特殊讲究？为什么？",
+      "expect_keywords": [
+        "solo"
+      ]
+    },
+    {
+      "id": 8,
+      "type": "in_corpus",
+      "q": "中文 Windows 下后端一启动就报 GBK 编码错误，问题出在哪个配置文件、怎么修？",
+      "expect_keywords": [
+        "alembic",
+        "破折号"
+      ]
+    },
+    {
+      "id": 9,
+      "type": "in_corpus",
+      "q": "这本书默认接哪家的大模型 API？用的哪个本地向量模型？",
+      "expect_keywords": [
+        "硅基流动",
+        "bge-small-zh"
+      ]
+    },
+    {
+      "id": 10,
+      "type": "in_corpus",
+      "q": "本地原生启动后，后端跑在哪个端口？健康检查访问哪个地址？",
+      "expect_keywords": [
+        "7091",
+        "/api/health"
+      ]
+    },
+    {
+      "id": 11,
+      "type": "in_corpus",
+      "q": "RuyiDocsGPT 有哪三种交付形态？",
+      "expect_keywords": [
+        "本地运行",
+        "教学演示",
+        "可部署"
+      ]
+    },
+    {
+      "id": 12,
+      "type": "out_of_corpus",
+      "q": "《大鹏 RAG 实战：如意知识库工厂》这本书由哪家出版社出版？书号 ISBN 是多少？",
+      "refusal_expected": true
+    },
+    {
+      "id": 13,
+      "type": "in_corpus",
+      "q": "书里用哪种考试比喻来解释 RAG？接上知识库前后分别像什么考试？",
+      "expect_keywords": [
+        "闭卷",
+        "开卷"
+      ]
+    },
+    {
+      "id": 14,
+      "type": "in_corpus",
+      "q": "书里那句「一句话记住 RAG」的口诀是什么？",
+      "expect_keywords": [
+        "会说话",
+        "说得对"
+      ]
+    },
+    {
+      "id": 15,
+      "type": "in_corpus",
+      "q": "该用知识库、微调、提示词还是联网搜索，书里的判断口诀怎么说？",
+      "expect_keywords": [
+        "微调",
+        "提示词",
+        "搜索"
+      ]
+    },
+    {
+      "id": 16,
+      "type": "in_corpus",
+      "q": "什么叫「纯二开」？这个「纯」字的边界是什么？",
+      "expect_keywords": [
+        "主流程",
+        "品牌化"
+      ]
+    },
+    {
+      "id": 17,
+      "type": "in_corpus",
+      "q": "本书的技术选型底线中，大模型、向量模型、向量库分别选了什么？",
+      "expect_keywords": [
+        "qwen",
+        "bge",
+        "faiss"
+      ]
+    },
+    {
+      "id": 18,
+      "type": "in_corpus",
+      "q": "照着书里某一章操作之前，应该先对仓库执行什么操作保证代码和书一致？",
+      "expect_keywords": [
+        "checkout",
+        "标签"
+      ]
+    },
+    {
+      "id": 19,
+      "type": "in_corpus",
+      "q": "作者跑 DocsGPT 时为什么最终没走 Docker 路线？他选了哪条路？",
+      "expect_keywords": [
+        "docker",
+        "原生"
+      ]
+    },
+    {
+      "id": 20,
+      "type": "in_corpus",
+      "q": "书里给 DocsGPT 配数据库时怎么做隔离？专用的库名叫什么？",
+      "expect_keywords": [
+        "docsgpt",
+        "隔离"
+      ]
+    },
+    {
+      "id": 21,
+      "type": "in_corpus",
+      "q": "后端第一次启动会自动跑数据库迁移，版本号从多少跑到多少？",
+      "expect_keywords": [
+        "0001",
+        "0024"
+      ]
+    },
+    {
+      "id": 22,
+      "type": "in_corpus",
+      "q": "上传中文文件名的文件会遇到什么问题？书里的解决办法是什么？",
+      "expect_keywords": [
+        "文件名",
+        "丢失"
+      ]
+    },
+    {
+      "id": 23,
+      "type": "in_corpus",
+      "q": "评测的三个指标分别叫什么？各量什么？",
+      "expect_keywords": [
+        "命中率",
+        "正确率",
+        "幻觉率"
+      ]
+    },
+    {
+      "id": 24,
+      "type": "in_corpus",
+      "q": "备份三件套要备哪三样东西？",
+      "expect_keywords": [
+        "数据库",
+        "向量",
+        "资料"
+      ]
+    },
+    {
+      "id": 25,
+      "type": "in_corpus",
+      "q": "Redis 在这套系统里承担哪三个逻辑角色？",
+      "expect_keywords": [
+        "消息",
+        "缓存"
+      ]
+    },
+    {
+      "id": 26,
+      "type": "in_corpus",
+      "q": "书里说远程 embedding 有个什么维度坑？",
+      "expect_keywords": [
+        "768",
+        "1024"
+      ]
+    },
+    {
+      "id": 27,
+      "type": "out_of_corpus",
+      "q": "这本书配套的付费课程定价是多少？在哪个平台购买？",
+      "refusal_expected": true
+    },
+    {
+      "id": 28,
+      "type": "out_of_corpus",
+      "q": "RuyiDocsGPT 的 v2.0 版本是什么时候发布的？新增了哪些功能？",
+      "refusal_expected": true
+    },
+    {
+      "id": 29,
+      "type": "out_of_corpus",
+      "q": "这本书的责任编辑和技术审校分别是谁？",
+      "refusal_expected": true
+    },
+    {
+      "id": 30,
+      "type": "out_of_corpus",
+      "q": "RuyiDocsGPT 的 GitHub 仓库目前有多少个 star？",
+      "refusal_expected": true
+    },
+    {
+      "id": 31,
+      "type": "out_of_corpus",
+      "q": "DocsGPT 上游在 2027 年的开发路线图里计划了哪些新功能？",
+      "refusal_expected": true
+    }
   ]
 }
