@@ -17,6 +17,7 @@
 import argparse
 import json
 import os
+import re
 import time
 import urllib.request
 import urllib.error
@@ -95,15 +96,47 @@ def ask(api, question, active_docs):
     return http_json(api + "/api/answer", payload=payload, timeout=120)
 
 
+def ask_with_retry(api, question, active_docs, retries=3, backoff=30):
+    # 题目连发容易打爆 LLM API 的 TPM 限流(表现为后端返回 400),
+    # 失败后等一个限流窗口再重试, 避免把限流误判成幻觉
+    last_err = None
+    for attempt in range(retries + 1):
+        try:
+            return ask(api, question, active_docs)
+        except urllib.error.HTTPError as e:
+            last_err = e
+            if attempt < retries:
+                print("  [retry] HTTP %s, %ss 后重试(%d/%d)" % (e.code, backoff, attempt + 1, retries))
+                time.sleep(backoff)
+        except Exception as e:
+            last_err = e
+            if attempt < retries:
+                time.sleep(backoff)
+    raise last_err
+
+
 def contains_all(text, keywords):
     t = (text or "").lower()
     missing = [k for k in keywords if k.lower() not in t]
     return (len(missing) == 0), missing
 
 
+# 拒答的正则模式: 否定词 + (可选修饰) + 覆盖类动词。
+# 固定措辞库对非确定性输出是打地鼠(一周八场冤案的教训), 模式匹配把
+# "没有提到/未被涵盖/没有被明确记录/未在书中提及"这类变体一网打尽。
+REFUSAL_PATTERNS = [
+    r"(没有|未|无|不曾)[^。！？]{0,6}(提及|提到|记录|涵盖|包含|说明|写明|给出|列出|找到|出现|回答)",
+    r"无法[^。！？]{0,10}(回答|确定|提供|给出|得知|获取|查到|找到)",
+    r"(文档|资料|书稿?|内容|语料)[^。！？]{0,10}(没有|不包含|查不到|找不到)",
+    r"抱歉",
+]
+
+
 def is_refusal(text, phrases):
     t = text or ""
-    return any(p in t for p in phrases)
+    if any(p in t for p in phrases):
+        return True
+    return any(re.search(pat, t) for pat in REFUSAL_PATTERNS)
 
 
 def main():
@@ -113,6 +146,7 @@ def main():
     ap.add_argument("--ingest", action="store_true", help="自动导入 ruyi/eval/corpus 再评测")
     ap.add_argument("--testset", default=os.path.join(HERE, "testset.json"))
     ap.add_argument("--report", default=os.path.join(HERE, "last_report.md"))
+    ap.add_argument("--delay", type=float, default=3.0, help="题间隔秒数(防 LLM API 限流)")
     args = ap.parse_args()
 
     ts = json.load(open(args.testset, encoding="utf-8"))
@@ -133,11 +167,12 @@ def main():
 
     for q in questions:
         try:
-            d = ask(args.api, q["q"], sid)
+            d = ask_with_retry(args.api, q["q"], sid)
             answer = d.get("answer", "") or ""
             srcs = d.get("sources", []) or []
         except Exception as e:
             answer, srcs = "[ERROR] %s" % e, []
+        time.sleep(args.delay)  # 节流, 降低触发 TPM 限流的概率
 
         hit = len(srcs) > 0
         if hit:

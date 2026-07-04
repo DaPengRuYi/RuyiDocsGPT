@@ -4,7 +4,8 @@
 # 把《大鹏 RAG 实战：如意知识库工厂》中文版 13 章复制为评测语料,
 # 实现"用这本书问这本书"的自指演示闭环。
 # 文件名转成 ASCII(chNN_xxx.md), 规避中文文件名上传被解析为空的坑(见书 ch03 坑四)。
-# 没有书稿的机器不用跑本脚本: 仓库内 corpus/ 已自带同步好的副本。
+# 注意: 书稿不随仓库开源(2026-07-04 决策), corpus/*.md 已被 .gitignore,
+# 本脚本只刷新本地评测语料; 没有书稿的机器自备 md 语料即可(见 eval/README.md)。
 # ============================================================
 $ErrorActionPreference = "Stop"
 
@@ -14,7 +15,7 @@ $CorpusDir = Join-Path $RepoRoot "ruyi\eval\corpus"
 
 if (-not (Test-Path $BookDir)) {
   Write-Host "[X] 未找到书稿目录: $BookDir" -ForegroundColor Red
-  Write-Host "    本脚本只在有书稿的机器上用来刷新语料; 仓库内 corpus/ 已有现成副本。" -ForegroundColor Yellow
+  Write-Host "    本脚本只在有书稿的机器上用来刷新语料; 书稿不随仓库开源, 无书稿请自备 md 语料。" -ForegroundColor Yellow
   exit 1
 }
 

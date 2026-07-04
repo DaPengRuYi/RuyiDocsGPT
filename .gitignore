@@ -208,4 +208,6 @@ tests/e2e/fixtures/docs/oversize.pdf
 
 # 如意二开层运行产物
 ruyi/logs/
-ruyi/eval/last_report.md
+
+# 书稿语料不随仓库开源（2026-07-04 决策：书稿仅存 D:/notes/RuyiBookCourse，corpus 只在本地同步用于评测）
+ruyi/eval/corpus/*.md
