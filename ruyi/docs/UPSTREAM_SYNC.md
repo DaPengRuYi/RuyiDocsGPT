@@ -34,6 +34,7 @@ git remote -v
 - 截至写这份文档时，`upstream/main` 已到 `46b7bb7`（2026-06-30），相对我们 HEAD 有约 **47 个文件**的差异，其中：
   - **上游领先的更新**（约 45 个）：docs 增删、`worker.py`、`embedding_pipeline.py`、`version.py`、`api/internal/routes.py` 等——这些是可同步进来的上游改动。
   - **我们自己的二开改动**（见下节）：目前只有 2 个源码文件 + 删 1 个大文件 + 新增 `ruyi/` 层。
+- **2026-07-04 同步核查**：`upstream/main` 仍停在 `46b7bb7`，仅新增 `0.17.3`/`0.18.0` 两个 tag。重点核查的 remote embedding 两修复（`df5582db` remote embeds、`1acb8363` 维度截断护栏 + remote_worker 切块丢弃 bug）**均已包含在我们的基线快照中**（快照晚于两提交合并，`_remote_instance`/`EMBEDDINGS_MAX_INPUT_TOKENS` 在代码中均可验证）。基线之后的上游增量只有 0.18 文档革新、版本号 chore、Docker 下 Vite HMR 开发态修复——无安全补丁、无运行时修复，**本轮无需同步**。
 
 ## 3. 当前二开改动清单（相对上游）
 
