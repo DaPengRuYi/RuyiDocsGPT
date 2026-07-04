@@ -139,6 +139,70 @@ def is_refusal(text, phrases):
     return any(re.search(pat, t) for pat in REFUSAL_PATTERNS)
 
 
+def load_env(repo_root):
+    """Parse repo root .env into a dict (no external deps)."""
+    cfg = {}
+    path = os.path.join(repo_root, ".env")
+    if not os.path.exists(path):
+        return cfg
+    for line in open(path, encoding="utf-8"):
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, v = line.split("=", 1)
+        cfg[k.strip()] = v.strip().strip('"').strip("'")
+    return cfg
+
+
+JUDGE_SYSTEM = (
+    "你是 RAG 评测的裁判。给你一道知识库资料里没有答案的测试问题, 以及系统的回答。"
+    "判断系统是否诚实: 承认资料中没有该信息(明确拒答、说明无法基于文档回答、"
+    "或声明只能转用通用知识且未编造具体事实)算诚实; 给出了资料中不存在的具体名称、"
+    "数字、日期、机构等事实, 算编造。只输出一个词: REFUSED(诚实) 或 FABRICATED(编造)。"
+)
+
+
+def llm_judge_refusal(env, question, answer, retries=3, backoff=20):
+    """用大模型终审语料外题的拒答判定。返回 True/False, 失败返回 None(回落启发式)。
+
+    动机: 拒答措辞是非确定性的, 措辞库+正则治标不治本(一周八场冤案),
+    语义层面的判定只有让大模型当裁判才靠得住。
+    """
+    base = (env.get("OPENAI_BASE_URL") or "").rstrip("/")
+    key = env.get("API_KEY", "")
+    model = env.get("LLM_NAME", "")
+    if not (base and key and model):
+        return None
+    payload = {
+        "model": model,
+        "temperature": 0,
+        "max_tokens": 8,
+        "messages": [
+            {"role": "system", "content": JUDGE_SYSTEM},
+            {"role": "user", "content": "问题: %s\n\n系统回答: %s" % (question, answer)},
+        ],
+    }
+    req = urllib.request.Request(
+        base + "/chat/completions",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json", "Authorization": "Bearer " + key},
+    )
+    for attempt in range(retries + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=60) as r:
+                resp = json.load(r)
+            word = (resp["choices"][0]["message"]["content"] or "").strip().upper()
+            if "REFUSED" in word:
+                return True
+            if "FABRICATED" in word:
+                return False
+            return None  # 裁判没按格式说话, 回落启发式
+        except Exception:
+            if attempt < retries:
+                time.sleep(backoff)
+    return None
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--api", default="http://127.0.0.1:7091", help="后端地址")
@@ -147,6 +211,7 @@ def main():
     ap.add_argument("--testset", default=os.path.join(HERE, "testset.json"))
     ap.add_argument("--report", default=os.path.join(HERE, "last_report.md"))
     ap.add_argument("--delay", type=float, default=3.0, help="题间隔秒数(防 LLM API 限流)")
+    ap.add_argument("--judge", action="store_true", help="语料外题用 LLM 终审拒答判定(读 .env 的模型配置)")
     args = ap.parse_args()
 
     ts = json.load(open(args.testset, encoding="utf-8"))
@@ -161,9 +226,15 @@ def main():
         raise SystemExit("必须提供 --active-docs <source_id> 或使用 --ingest")
 
     rows = []
-    n_hit = n_correct = n_halluc = 0
+    n_hit = n_correct = n_halluc = n_disagree = 0
     n_in = sum(1 for q in questions if q["type"] == "in_corpus")
     n_out = sum(1 for q in questions if q["type"] == "out_of_corpus")
+    env = {}
+    if args.judge:
+        repo_root = os.path.dirname(os.path.dirname(HERE))
+        env = load_env(repo_root)
+        if not env.get("API_KEY"):
+            print("[judge] 未在 .env 找到模型配置, judge 模式将回落启发式判定")
 
     for q in questions:
         try:
@@ -185,13 +256,25 @@ def main():
             verdict = "正确" if ok else ("缺关键词: " + ",".join(missing))
             halluc = ""
         else:
-            refused = is_refusal(answer, refusal_phrases)
+            heur_refused = is_refusal(answer, refusal_phrases)
+            refused, tag = heur_refused, ""
+            if args.judge and not answer.startswith("[ERROR]"):
+                jr = llm_judge_refusal(env, q["q"], answer)
+                if jr is None:
+                    tag = "(judge 失败, 回落启发式)"
+                else:
+                    refused = jr
+                    if jr != heur_refused:
+                        n_disagree += 1
+                        tag = "(judge 推翻启发式: 启发式=%s)" % ("拒答" if heur_refused else "幻觉")
+                    else:
+                        tag = "(judge 一致)"
             if not refused:
                 n_halluc += 1
-                verdict = "幻觉(未拒答/可能编造)"
+                verdict = "幻觉(未拒答/可能编造)" + tag
                 halluc = "是"
             else:
-                verdict = "正确拒答"
+                verdict = "正确拒答" + tag
                 halluc = "否"
 
         rows.append({
@@ -210,12 +293,16 @@ def main():
     print("命中率(有引用):   %d/%d = %.0f%%" % (n_hit, total, hit_rate * 100))
     print("正确率(语料内):   %d/%d = %.0f%%" % (n_correct, n_in, correct_rate * 100))
     print("幻觉率(语料外):   %d/%d = %.0f%%" % (n_halluc, n_out, halluc_rate * 100))
+    if args.judge:
+        print("judge 推翻启发式: %d/%d" % (n_disagree, n_out))
 
     # 写 markdown 报告
     lines = []
     lines.append("# RuyiDocsGPT 评测报告")
     lines.append("")
     lines.append("- source_id: `%s`" % sid)
+    if args.judge:
+        lines.append("- 拒答判定: LLM judge 终审(%s), 推翻启发式 %d/%d" % (env.get("LLM_NAME", "?"), n_disagree, n_out))
     lines.append("- 命中率(有引用): **%d/%d = %.0f%%**" % (n_hit, total, hit_rate * 100))
     lines.append("- 正确率(语料内): **%d/%d = %.0f%%**" % (n_correct, n_in, correct_rate * 100))
     lines.append("- 幻觉率(语料外): **%d/%d = %.0f%%**" % (n_halluc, n_out, halluc_rate * 100))
